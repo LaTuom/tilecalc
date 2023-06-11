@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laattalaskuri</title>
+</head>
+<body>
+    <h1>Laattojen Laskuri</h1>
+    <div>
+        <label for="wall_height">Seinän korkeus (cm): </label>
+        <input type="number" id="wall_height" step="0.01">
+    </div>
+    <div>
+        <label for="wall_width">Seinän leveys (cm): </label>
+        <input type="number" id="wall_width" step="0.01">
+    </div>
+    <div>
+        <label for="tile_height">Laatan korkeus (cm): </label>
+        <input type="number" id="tile_height" step="0.01">
+    </div>
+    <div>
+        <label for="tile_width">Laatan leveys (cm): </label>
+        <input type="number" id="tile_width" step="0.01">
+    </div>
+    <div>
+        <label for="joint_width">Sauman leveys (mm): </label>
+        <input type="number" id="joint_width" step="0.01">
+    </div>
+    <div>
+        <label for="cut_first_width">Lähtöpalan leveys (cm): </label>
+        <input type="number" id="cut_first_width" step="0.01">
+        <input type="range" id="cut_first_width_slider" min="1" max="60" step="1">
+    </div>
+    <div>
+        <label for="cut_first_height">Lähtöpalan korkeus (cm): </label>
+        <input type="number" id="cut_first_height" step="0.01">
+        <input type="range" id="cut_first_height_slider" min="1" max="60" step="1">
+    </div>
+
+    <h2>Tulokset</h2>
+    <div id="results"></div>
+
+    <script>
+        function calculateTiling() {
+            const wall_height = parseFloat(document.getElementById('wall_height').value);
+            const wall_width = parseFloat(document.getElementById('wall_width').value);
+            const tile_height = parseFloat(document.getElementById('tile_height').value);
+            const tile_width = parseFloat(document.getElementById('tile_width').value);
+            const joint_width = parseFloat(document.getElementById('joint_width').value);
+            const cut_first_width = parseFloat(document.getElementById('cut_first_width').value);
+            const cut_first_height = parseFloat(document.getElementById('cut_first_height').value);
+
+            const resultsElement = document.getElementById('results');
+            resultsElement.innerHTML = '';
+
+            // Calculate all 3 options
+            for (let option = 1; option <= 3; option++) {
+                let result_width, result_height, num_tiles_width, num_tiles_height;
+
+                if (option === 1) {
+                    const result_w = wall_width / tile_width;
+                    const result_h = wall_height / tile_height;
+                    num_tiles_width = Math.floor(result_w);
+                    num_tiles_height = Math.floor(result_h);
+
+                    const joint_w = (num_tiles_width - 1) * (joint_width / 10);
+                    const joint_h = (num_tiles_height - 1) * (joint_width / 10);
+
+                    result_width = (wall_width - joint_w) - (num_tiles_width * tile_width);
+                    result_height = (wall_height - joint_h) - (num_tiles_height * tile_height);
+                } else if (option === 2) {
+                    const result_w = wall_width / tile_width;
+                    const result_h = wall_height / tile_height;
+                    num_tiles_width = Math.floor(result_w);
+                    num_tiles_height = Math.floor(result_h);
+
+                    const joint_w = (num_tiles_width - 1) * (joint_width / 10);
+                    const joint_h = (num_tiles_height - 1) * (joint_width / 10);
+
+                    const even_cut = (wall_width - joint_w - num_tiles_width * tile_width) / 2;
+                    result_width = even_cut;
+
+                    const even_cut_height = (wall_height - joint_h - num_tiles_height * tile_height) / 2;
+                    result_height = even_cut_height;
+                } else if (option === 3) {
+                    const result_w = (wall_width - cut_first_width) / tile_width;
+                    const result_h = (wall_height - cut_first_height) / tile_height;
+                    num_tiles_width = Math.floor(result_w);
+                    num_tiles_height = Math.floor(result_h);
+
+                    const joint_w = (num_tiles_width - 1) * (joint_width / 10);
+                    const joint_h = (num_tiles_height - 1) * (joint_width / 10);
+
+                    const cut_last_width = (wall_width - joint_w) - (num_tiles_width * tile_width) - cut_first_width;
+                    const cut_last_height = (wall_height - joint_h) - (num_tiles_height * tile_height) - cut_first_height;
+
+                    result_width = cut_last_width;
+                    result_height = cut_last_height;
+                }
+
+                resultsElement.innerHTML += `<div><strong>Lähtö kokonaisella laatalla </strong></div>`; 
+                if (option === 2) {
+                    resultsElement.innerHTML += `<div><strong>Molempiin reunoihin saman kokoinen laatta</strong></div>`;  
+                }  
+                if (option === 3) {
+                    resultsElement.innerHTML += `<div><strong>Lähtö ${cut_first_width.toFixed(2)} leveällä, ${cut_first_height.toFixed(2)} cm korkealla laatalla</strong></div>`;
+                }
+
+                resultsElement.innerHTML += `<div>Kokonaisia laattoja: Leveys: ${num_tiles_width} Korkeus: ${num_tiles_height}</div>`;
+                resultsElement.innerHTML += `<div>Viimeisen laatan leveys: ${result_width.toFixed(2)} cm</div>`;
+                resultsElement.innerHTML += `<div>Viimeisen laatan korkeus: ${result_height.toFixed(2)} cm</div>`;
+                resultsElement.innerHTML += '<br>';
+            }
+        }
+
+        // Update input and slider values in real-time
+        document.getElementById('cut_first_width_slider').addEventListener('input', (event) => {
+            document.getElementById('cut_first_width').value = event.target.value;
+            calculateTiling();
+        });
+
+        document.getElementById('cut_first_height_slider').addEventListener('input', (event) => {
+            document.getElementById('cut_first_height').value = event.target.value;
+            calculateTiling();
+        });
+
+        // Update results in real-time
+        const inputs = document.querySelectorAll('input[type="number"]');
+        for (const input of inputs) {
+            input.addEventListener('input', calculateTiling);
+        }
+    </script>
+</body>
+</html>
